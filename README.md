@@ -72,6 +72,8 @@ app/
   settings.py           # 数据库连接配置与连接串拼装
 config/
   report_rules.json     # 统计规则配置
+start_windows.bat       # Windows 启动脚本（推荐）
+.env.windows.example    # Windows 环境变量示例文件
 static/
   app.js                # 前端交互逻辑
   app.css               # 页面样式
@@ -104,94 +106,75 @@ tests/
 
 ---
 
-## 部署说明
+## 部署说明（Windows 重点）
 
 ### 1) 环境要求
 
-- 操作系统：Linux（推荐）/ Windows
+- 操作系统：Windows Server 2019/2022 或 Windows 10/11
 - Python：`>=3.10`
 - 包管理：`uv`
 - 数据库驱动：`ODBC Driver 18 for SQL Server`
-- 网络：应用机器可访问 SQL Server 地址与端口
+- 网络：部署机器可访问 SQL Server 地址与端口
 
-### 2) 安装依赖
+### 2) 一次性准备
 
-```bash
+1. 安装 Python 与 uv（`uv --version` 可用）
+2. 安装 SQL Server ODBC 驱动（建议 `ODBC Driver 18 for SQL Server`）
+3. 将项目拷贝到固定目录（例如 `D:\apps\hydro-data-statistical`）
+4. 在项目根目录执行一次依赖安装：
+
+```powershell
 uv sync --extra dev
 ```
 
-### 3) 配置数据库连接
+### 3) Windows 启动脚本（推荐）
 
-通过环境变量覆盖默认连接（默认值写在 `app/settings.py`）：
+项目根目录已提供：`start_windows.bat`
 
-- `DB_HOST`（默认 `10.6.34.16`）
-- `DB_PORT`（默认 `1433`）
-- `DB_NAME`（默认 `CSRRDB`）
-- `DB_USER`（默认 `sa`）
-- `DB_PASSWORD`（默认 `xiangsiersheng`）
-- `DB_DRIVER`（默认 `ODBC Driver 18 for SQL Server`）
+该脚本能力：
 
-示例：
+- 自动切换到项目目录
+- 可读取 `.env.windows` 环境变量文件
+- 首次启动自动执行 `uv sync`
+- 支持 `prod/dev` 启动模式
+- 自动输出日志到 `logs/access.log` 和 `logs/error.log`
 
-```bash
-export DB_HOST=10.6.34.16
-export DB_PORT=1433
-export DB_NAME=CSRRDB
-export DB_USER=sa
-export DB_PASSWORD='***'
-export DB_DRIVER='ODBC Driver 18 for SQL Server'
+#### 配置方式
+
+1. 复制示例配置文件：
+
+```powershell
+copy .env.windows.example .env.windows
 ```
 
-### 4) 启动方式
+2. 按需修改 `.env.windows`（数据库、端口、worker 数等）
 
-#### 开发模式
+3. 启动：
 
-```bash
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```powershell
+start_windows.bat
 ```
 
-#### 生产模式（示例）
+访问地址：`http://127.0.0.1:8000`
 
-```bash
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
-```
+### 4) `.env.windows` 关键变量
 
-访问地址：`http://<host>:8000`
+- `RUN_MODE=prod|dev`
+- `APP_HOST=0.0.0.0`
+- `APP_PORT=8000`
+- `APP_WORKERS=2`（prod 模式生效）
+- `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASSWORD` / `DB_DRIVER`
+- `SKIP_SYNC=0|1`（是否跳过启动前依赖同步）
+- `FORCE_SYNC=0|1`（是否每次启动都执行 `uv sync`）
 
-### 5) systemd 部署示例（可选）
+### 5) 更好的生产方案（非 Docker）
 
-`/etc/systemd/system/hydro-report.service`：
+如果是长期稳定运行，建议将程序注册为 **Windows Service**，推荐顺序：
 
-```ini
-[Unit]
-Description=Hydro Monthly Report Service
-After=network.target
+1. **NSSM（推荐）**：把 `start_windows.bat` 注册成服务，支持开机自启、自动重启、标准日志管理。
+2. **Windows 任务计划程序**：设置“开机启动 + 失败重试”，实现成本低，但管理能力弱于服务。
 
-[Service]
-Type=simple
-User=www-data
-WorkingDirectory=/path/to/hydro-data-statistical
-Environment=DB_HOST=10.6.34.16
-Environment=DB_PORT=1433
-Environment=DB_NAME=CSRRDB
-Environment=DB_USER=sa
-Environment=DB_PASSWORD=***
-ExecStart=/usr/bin/env uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
-Restart=always
-RestartSec=5
-
-[Install]
-WantedBy=multi-user.target
-```
-
-启用命令：
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable hydro-report
-sudo systemctl start hydro-report
-sudo systemctl status hydro-report
-```
+> 结论：测试环境可直接双击 `start_windows.bat`；生产环境建议 `NSSM + start_windows.bat`。
 
 ---
 
@@ -297,6 +280,13 @@ uv sync
 - `sourcetype_filter` 是否与库中实际值一致
 - `ctype_daily_expected` 的键是否与 `Stations.Ctype` 实际值一致
 - `day_start_hour` 是否符合你的报表口径
+
+### 4) Windows 下双击 `start_windows.bat` 闪退
+
+建议在 `cmd` 或 `PowerShell` 中手动执行 `start_windows.bat`，并查看：
+
+- `logs/error.log`
+- 控制台输出中是否提示 `uv not found` 或数据库连接失败
 
 ---
 
