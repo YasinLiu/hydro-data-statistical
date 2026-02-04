@@ -4,12 +4,12 @@ from datetime import datetime
 from typing import Any
 
 
-def month_range(year: int, month: int) -> tuple[datetime, datetime]:
-    start = datetime(year, month, 1)
+def month_range(year: int, month: int, day_start_hour: int = 9) -> tuple[datetime, datetime]:
+    start = datetime(year, month, 1, day_start_hour, 0, 0)
     if month == 12:
-        end = datetime(year + 1, 1, 1)
+        end = datetime(year + 1, 1, 1, day_start_hour, 0, 0)
     else:
-        end = datetime(year, month + 1, 1)
+        end = datetime(year, month + 1, 1, day_start_hour, 0, 0)
     return start, end
 
 

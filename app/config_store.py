@@ -13,6 +13,7 @@ DEFAULT_RULES: dict[str, Any] = {
     },
     "station_overrides": {},
     "sourcetype_filter": "1",
+    "day_start_hour": 9,
 }
 
 
@@ -64,6 +65,14 @@ def normalize_rules(rules: dict[str, Any] | None) -> dict[str, Any]:
 
     sourcetype_filter = _clean_text(rules.get("sourcetype_filter", base["sourcetype_filter"]))
     base["sourcetype_filter"] = sourcetype_filter or base["sourcetype_filter"]
+
+    try:
+        day_start_hour = int(rules.get("day_start_hour", base["day_start_hour"]))
+    except (TypeError, ValueError):
+        day_start_hour = base["day_start_hour"]
+    if day_start_hour < 0 or day_start_hour > 23:
+        day_start_hour = base["day_start_hour"]
+    base["day_start_hour"] = day_start_hour
 
     return base
 

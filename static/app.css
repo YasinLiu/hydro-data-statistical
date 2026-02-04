@@ -18,13 +18,14 @@ body {
 }
 
 .page {
-  width: min(95vw, 1600px);
-  margin: 18px auto;
+  width: 100vw;
+  min-height: 100vh;
+  margin: 0;
   background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 14px;
-  box-shadow: 0 8px 24px rgba(14, 20, 28, 0.08);
+  border: none;
+  border-radius: 0;
+  padding: 10px 12px;
+  box-shadow: none;
 }
 
 h1 {
@@ -38,12 +39,22 @@ h1 {
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 button,
 input,
+select,
 textarea {
   font: inherit;
+}
+
+select {
+  border: 1px solid #7f8a97;
+  border-radius: 4px;
+  padding: 4px 6px;
+  min-width: 82px;
+  background: #fff;
 }
 
 button {
@@ -63,14 +74,16 @@ button:hover {
   margin: 10px 0;
   min-height: 24px;
   color: #9a2c2c;
+  text-align: center;
 }
 
 .config-panel {
-  margin: 10px 0;
+  margin: 10px auto;
   border: 1px solid var(--line);
   border-radius: 6px;
   padding: 10px;
   background: #f9fbfd;
+  max-width: 1200px;
 }
 
 .config-panel.hidden {
@@ -98,14 +111,20 @@ button:hover {
 }
 
 .table-wrap {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
   overflow: auto;
   border: 1px solid var(--line);
+  max-height: calc(100vh - 170px);
+  margin: 0 auto;
 }
 
 #reportTable {
   width: max-content;
   border-collapse: collapse;
   table-layout: fixed;
+  margin: 0 auto;
 }
 
 #reportTable th,
@@ -119,13 +138,16 @@ button:hover {
 
 #reportTable th:first-child,
 #reportTable td:first-child {
-  min-width: 180px;
+  min-width: 120px;
+  max-width: 140px;
   text-align: left;
   padding-left: 8px;
   position: sticky;
   left: 0;
   z-index: 2;
   background: #f0f4f8;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 #reportTable th {
@@ -137,11 +159,15 @@ button:hover {
 
 @media (max-width: 768px) {
   .page {
-    width: 100vw;
-    margin: 0;
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
+    padding: 8px;
+  }
+
+  .toolbar {
+    justify-content: flex-start;
+  }
+
+  .message {
+    text-align: left;
   }
 
   h1 {

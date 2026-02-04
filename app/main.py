@@ -11,7 +11,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.config_store import load_rules_from_file, save_rules_to_file
 from app.db import SQLServerRepository, month_range
-from app.report_logic import build_monthly_report
+from app.report_logic import build_monthly_report, resolve_day_start_hour
 from app.settings import SETTINGS, build_sqlserver_connection_string
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,7 +32,8 @@ def _default_repository_factory() -> SQLServerRepository:
 
 def _build_report(repo: RepositoryProtocol, config_path: Path, year: int, month: int) -> dict[str, Any]:
     rules = load_rules_from_file(config_path)
-    start, end = month_range(year, month)
+    day_start_hour = resolve_day_start_hour(rules)
+    start, end = month_range(year, month, day_start_hour=day_start_hour)
 
     stations = repo.fetch_stations()
     records = repo.fetch_records(start, end, rules["sourcetype_filter"])

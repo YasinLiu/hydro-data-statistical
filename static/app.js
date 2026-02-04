@@ -1,3 +1,4 @@
+const yearPicker = document.getElementById("yearPicker");
 const monthPicker = document.getElementById("monthPicker");
 const queryBtn = document.getElementById("queryBtn");
 const exportBtn = document.getElementById("exportBtn");
@@ -16,13 +17,10 @@ function setMessage(text, isError = true) {
 }
 
 function getCurrentYearMonth() {
-  const value = monthPicker.value;
-  if (!value) {
-    const now = new Date();
-    return { year: now.getFullYear(), month: now.getMonth() + 1 };
-  }
-  const [yearStr, monthStr] = value.split("-");
-  return { year: Number(yearStr), month: Number(monthStr) };
+  const now = new Date();
+  const year = Number(yearPicker.value || now.getFullYear());
+  const month = Number(monthPicker.value || now.getMonth() + 1);
+  return { year, month };
 }
 
 function renderTable(data) {
@@ -112,10 +110,26 @@ async function saveConfig() {
   }
 }
 
-function initMonth() {
+function initYearMonthPickers() {
   const now = new Date();
-  const month = `${now.getMonth() + 1}`.padStart(2, "0");
-  monthPicker.value = `${now.getFullYear()}-${month}`;
+  const currentYear = now.getFullYear();
+  const startYear = currentYear - 15;
+  const endYear = currentYear + 5;
+
+  let yearOptions = "";
+  for (let year = startYear; year <= endYear; year += 1) {
+    yearOptions += `<option value="${year}">${year}</option>`;
+  }
+  yearPicker.innerHTML = yearOptions;
+
+  let monthOptions = "";
+  for (let month = 1; month <= 12; month += 1) {
+    monthOptions += `<option value="${month}">${month}</option>`;
+  }
+  monthPicker.innerHTML = monthOptions;
+
+  yearPicker.value = String(currentYear);
+  monthPicker.value = String(now.getMonth() + 1);
 }
 
 queryBtn.addEventListener("click", fetchReport);
@@ -131,5 +145,5 @@ toggleConfigBtn.addEventListener("click", async () => {
   }
 });
 
-initMonth();
+initYearMonthPickers();
 fetchReport();

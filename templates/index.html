@@ -8,11 +8,14 @@
   </head>
   <body>
     <main class="page">
-      <h1>系统定时报据接收统计月报表</h1>
+      <h1>Karot水情接收系统定时报据接收统计月报表</h1>
 
       <section class="toolbar">
-        <label for="monthPicker">统计月份</label>
-        <input id="monthPicker" type="month" />
+        <label for="yearPicker">统计年月</label>
+        <select id="yearPicker"></select>
+        <span>年</span>
+        <select id="monthPicker"></select>
+        <span>月</span>
         <button id="queryBtn" type="button">查询</button>
         <button id="exportBtn" type="button">导出 Excel</button>
         <button id="toggleConfigBtn" type="button">配置规则</button>
@@ -25,7 +28,8 @@
         <p>
           规则说明：先按 <code>ctype_daily_expected</code> 取应到报段次，再按
           <code>station_overrides</code> 覆盖；同时只统计
-          <code>sourcetype_filter</code> 指定来源（当前需求为 1）。
+          <code>sourcetype_filter</code> 指定来源（当前需求为 1）；每日统计窗口由
+          <code>day_start_hour</code> 控制（如 9 表示 09:00 到次日 08:59）。
         </p>
         <textarea id="configText" spellcheck="false"></textarea>
         <div class="config-actions">

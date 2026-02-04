@@ -6,5 +6,6 @@
     "03": 48
   },
   "station_overrides": {},
-  "sourcetype_filter": "1"
+  "sourcetype_filter": "1",
+  "day_start_hour": 9
 }
