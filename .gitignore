@@ -50,4 +50,5 @@ Thumbs.db
 
 # Project specific
 hydro_data_statistical.egg-info/
+.worktrees/
 logs/
