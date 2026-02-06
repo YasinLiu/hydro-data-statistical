@@ -106,6 +106,37 @@ def normalize_rules(rules: dict[str, Any] | None) -> dict[str, Any]:
     return base
 
 
+def _resolve_expected_from_defaults(
+    ctype: str, ctype_defaults: dict[str, int], default_daily_expected: int
+) -> int:
+    if ctype in ctype_defaults:
+        return ctype_defaults[ctype]
+    if "*" in ctype_defaults:
+        return ctype_defaults["*"]
+    return default_daily_expected
+
+
+def generate_rules_from_stations(
+    stations: list[dict[str, Any]], base_rules: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    normalized = normalize_rules(base_rules)
+    ctype_defaults = normalized.get("ctype_defaults", {})
+    default_daily_expected = normalized.get("default_daily_expected", 24)
+
+    station_daily_expected: dict[str, int] = {}
+    for station in stations:
+        station_id = _clean_text(station.get("station_id"))
+        if not station_id:
+            continue
+        ctype = _clean_text(station.get("ctype"))
+        station_daily_expected[station_id] = _resolve_expected_from_defaults(
+            ctype, ctype_defaults, default_daily_expected
+        )
+
+    normalized["station_daily_expected"] = station_daily_expected
+    return normalized
+
+
 def load_rules_from_file(path: Path) -> dict[str, Any]:
     if not path.exists():
         return deepcopy(DEFAULT_RULES)
@@ -116,6 +147,15 @@ def load_rules_from_file(path: Path) -> dict[str, Any]:
         return deepcopy(DEFAULT_RULES)
 
     return normalize_rules(raw if isinstance(raw, dict) else None)
+
+
+def load_or_generate_rules(path: Path, stations: list[dict[str, Any]]) -> dict[str, Any]:
+    if path.exists():
+        return load_rules_from_file(path)
+
+    generated = generate_rules_from_stations(stations, DEFAULT_RULES)
+    save_rules_to_file(path, generated)
+    return generated
 
 
 def save_rules_to_file(path: Path, rules: dict[str, Any]) -> dict[str, Any]:

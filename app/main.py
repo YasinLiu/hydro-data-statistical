@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.config_store import load_rules_from_file, save_rules_to_file
+from app.config_store import load_or_generate_rules, load_rules_from_file, save_rules_to_file
 from app.db import SQLServerRepository, month_range
 from app.report_logic import build_monthly_report, resolve_day_start_hour
 from app.settings import SETTINGS, build_sqlserver_connection_string
@@ -29,9 +29,15 @@ def _default_repository_factory() -> SQLServerRepository:
     connection_string = build_sqlserver_connection_string(SETTINGS)
     return SQLServerRepository(connection_string)
 
+def load_or_generate_rules_with_repo(
+    repo: RepositoryProtocol, config_path: Path
+) -> dict[str, Any]:
+    stations = repo.fetch_stations()
+    return load_or_generate_rules(config_path, stations)
+
 
 def _build_report(repo: RepositoryProtocol, config_path: Path, year: int, month: int) -> dict[str, Any]:
-    rules = load_rules_from_file(config_path)
+    rules = load_or_generate_rules_with_repo(repo, config_path)
     day_start_hour = resolve_day_start_hour(rules)
     start, end = month_range(year, month, day_start_hour=day_start_hour)
 
@@ -95,7 +101,8 @@ def create_app(
 
     @app.get("/api/config")
     def get_config() -> dict[str, Any]:
-        return load_rules_from_file(app.state.config_path)
+        repo = app.state.repository_factory()
+        return load_or_generate_rules_with_repo(repo, app.state.config_path)
 
     @app.put("/api/config")
     def update_config(payload: dict[str, Any] = Body(...)) -> dict[str, Any]:
