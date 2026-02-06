@@ -29,6 +29,8 @@ def test_save_then_load_rules_roundtrip(tmp_path: Path):
     rules = {
         "default_daily_expected": 24,
         "ctype_daily_expected": {"RR": 24, "ZZ": 48},
+        "ctype_defaults": {"01": 24, "*": 48},
+        "station_daily_expected": {},
         "station_overrides": {"A001": 48},
         "sourcetype_filter": "1",
         "day_start_hour": 9,
