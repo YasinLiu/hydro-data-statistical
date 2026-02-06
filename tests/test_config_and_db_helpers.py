@@ -1,8 +1,20 @@
 from pathlib import Path
 
-from app.config_store import DEFAULT_RULES, load_rules_from_file, save_rules_to_file
+from app.config_store import DEFAULT_RULES, load_rules_from_file, normalize_rules, save_rules_to_file
 from app.db import month_range
 
+
+def test_normalize_rules_includes_station_daily_expected_and_ctype_defaults():
+    rules = {
+        "ctype_defaults": {"01": 24, "*": 48},
+        "station_daily_expected": {"A001": 24},
+    }
+
+    normalized = normalize_rules(rules)
+
+    assert normalized["ctype_defaults"]["01"] == 24
+    assert normalized["ctype_defaults"]["*"] == 48
+    assert normalized["station_daily_expected"]["A001"] == 24
 
 def test_load_rules_from_missing_file_returns_defaults(tmp_path: Path):
     config_file = tmp_path / "missing.json"

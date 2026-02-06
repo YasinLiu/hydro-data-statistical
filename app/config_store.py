@@ -11,6 +11,8 @@ DEFAULT_RULES: dict[str, Any] = {
         "RR": 24,
         "ZZ": 48,
     },
+    "ctype_defaults": {"01": 24, "*": 48},
+    "station_daily_expected": {},
     "station_overrides": {},
     "sourcetype_filter": "1",
     "day_start_hour": 9,
@@ -49,6 +51,33 @@ def normalize_rules(rules: dict[str, Any] | None) -> dict[str, Any]:
             ctype_daily_expected[cleaned_key] = int_value
     if ctype_daily_expected:
         base["ctype_daily_expected"] = ctype_daily_expected
+
+    ctype_defaults: dict[str, int] = {}
+    for key, value in (rules.get("ctype_defaults") or {}).items():
+        cleaned_key = _clean_text(key)
+        if not cleaned_key:
+            continue
+        try:
+            int_value = int(value)
+        except (TypeError, ValueError):
+            continue
+        if int_value > 0:
+            ctype_defaults[cleaned_key] = int_value
+    if ctype_defaults:
+        base["ctype_defaults"] = ctype_defaults
+
+    station_daily_expected: dict[str, int] = {}
+    for key, value in (rules.get("station_daily_expected") or {}).items():
+        cleaned_key = _clean_text(key)
+        if not cleaned_key:
+            continue
+        try:
+            int_value = int(value)
+        except (TypeError, ValueError):
+            continue
+        if int_value > 0:
+            station_daily_expected[cleaned_key] = int_value
+    base["station_daily_expected"] = station_daily_expected
 
     station_overrides: dict[str, int] = {}
     for key, value in (rules.get("station_overrides") or {}).items():
