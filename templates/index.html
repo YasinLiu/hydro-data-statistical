@@ -26,15 +26,17 @@
       <section id="configPanel" class="config-panel hidden">
         <h2>本地 JSON 配置</h2>
         <p>
-          规则说明：先按 <code>ctype_daily_expected</code> 取应到报段次，再按
-          <code>station_overrides</code> 覆盖；同时只统计
-          <code>sourcetype_filter</code> 指定来源（当前需求为 1）；每日统计窗口由
-          <code>day_start_hour</code> 控制（如 9 表示 09:00 到次日 08:59）。
+          规则说明：系统会为每个站点保存“每日应到报次数”。你只需修改
+          <code>station_daily_expected</code> 即可。<br />
+          <code>ctype_defaults</code> 仅用于“重新生成配置”时自动填充站点默认值；<br />
+          <code>sourcetype_filter</code> 表示只统计指定来源（当前需求为 1）；<br />
+          <code>day_start_hour</code> 表示每日统计起始小时（如 9 表示 09:00 到次日 08:59）。
         </p>
         <textarea id="configText" spellcheck="false"></textarea>
         <div class="config-actions">
           <button id="reloadConfigBtn" type="button">重新加载</button>
           <button id="saveConfigBtn" type="button">保存配置</button>
+          <button id="regenerateConfigBtn" class="danger" type="button">重新生成配置</button>
         </div>
       </section>
 

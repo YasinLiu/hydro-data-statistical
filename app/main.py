@@ -9,7 +9,12 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.config_store import load_or_generate_rules, load_rules_from_file, save_rules_to_file
+from app.config_store import (
+    generate_rules_from_stations,
+    load_or_generate_rules,
+    load_rules_from_file,
+    save_rules_to_file,
+)
 from app.db import SQLServerRepository, month_range
 from app.report_logic import build_monthly_report, resolve_day_start_hour
 from app.settings import SETTINGS, build_sqlserver_connection_string
@@ -34,6 +39,14 @@ def load_or_generate_rules_with_repo(
 ) -> dict[str, Any]:
     stations = repo.fetch_stations()
     return load_or_generate_rules(config_path, stations)
+
+def regenerate_rules_with_repo(
+    repo: RepositoryProtocol, config_path: Path
+) -> dict[str, Any]:
+    stations = repo.fetch_stations()
+    base_rules = load_rules_from_file(config_path)
+    regenerated = generate_rules_from_stations(stations, base_rules)
+    return save_rules_to_file(config_path, regenerated)
 
 
 def _build_report(repo: RepositoryProtocol, config_path: Path, year: int, month: int) -> dict[str, Any]:
@@ -107,6 +120,11 @@ def create_app(
     @app.put("/api/config")
     def update_config(payload: dict[str, Any] = Body(...)) -> dict[str, Any]:
         return save_rules_to_file(app.state.config_path, payload)
+
+    @app.post("/api/config/regenerate")
+    def regenerate_config() -> dict[str, Any]:
+        repo = app.state.repository_factory()
+        return regenerate_rules_with_repo(repo, app.state.config_path)
 
     @app.get("/api/report/monthly")
     def monthly_report(

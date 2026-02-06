@@ -70,6 +70,15 @@ button:hover {
   background: #255f81;
 }
 
+button.danger {
+  border-color: #b23b3b;
+  background: #c74a4a;
+}
+
+button.danger:hover {
+  background: #b23b3b;
+}
+
 .message {
   margin: 10px 0;
   min-height: 24px;

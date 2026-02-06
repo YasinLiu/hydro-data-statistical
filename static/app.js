@@ -10,6 +10,7 @@ const configPanel = document.getElementById("configPanel");
 const configText = document.getElementById("configText");
 const reloadConfigBtn = document.getElementById("reloadConfigBtn");
 const saveConfigBtn = document.getElementById("saveConfigBtn");
+const regenerateConfigBtn = document.getElementById("regenerateConfigBtn");
 
 function setMessage(text, isError = true) {
   message.style.color = isError ? "#9a2c2c" : "#145a32";
@@ -110,6 +111,28 @@ async function saveConfig() {
   }
 }
 
+async function regenerateConfig() {
+  const confirmed = window.confirm(
+    "此操作会根据站点类型重新生成所有站点段次，并覆盖你手动修改的配置。确定继续吗？"
+  );
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/config/regenerate", { method: "POST" });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.detail || "重新生成失败");
+    }
+    const regenerated = await response.json();
+    configText.value = JSON.stringify(regenerated, null, 2);
+    setMessage("配置已重新生成并覆盖保存", false);
+  } catch (error) {
+    setMessage(error.message || "重新生成失败");
+  }
+}
+
 function initYearMonthPickers() {
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -137,6 +160,7 @@ exportBtn.addEventListener("click", exportReport);
 
 reloadConfigBtn.addEventListener("click", loadConfig);
 saveConfigBtn.addEventListener("click", saveConfig);
+regenerateConfigBtn.addEventListener("click", regenerateConfig);
 
 toggleConfigBtn.addEventListener("click", async () => {
   configPanel.classList.toggle("hidden");
