@@ -57,3 +57,20 @@ def test_build_monthly_report_uses_day_start_hour_9_window():
     assert row["expected_total"] == 24 * 31
     assert row["actual_total"] == 4
     assert row["rate"] == round((4 / (24 * 31)) * 100, 1)
+
+
+def test_report_uses_station_daily_expected():
+    stations = [
+        {"station_id": "A001", "cname": "测试站", "ctype": "01"},
+    ]
+    rules = {
+        "default_daily_expected": 24,
+        "ctype_defaults": {"01": 24, "*": 48},
+        "station_daily_expected": {"A001": 48},
+    }
+
+    report = build_monthly_report(stations, [], 2026, 2, rules)
+
+    row = report["rows"][0]
+    assert row["expected_per_day"] == 48
+    assert row["expected_total"] == 48 * 28

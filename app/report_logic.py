@@ -29,14 +29,22 @@ def _normalize_int_mapping(raw: Any) -> dict[str, int]:
 
 
 def resolve_daily_expected(station_id: str, ctype: str, rules: dict[str, Any]) -> int:
+    station_daily_expected = _normalize_int_mapping(rules.get("station_daily_expected"))
     station_overrides = _normalize_int_mapping(rules.get("station_overrides"))
     ctype_daily_expected = _normalize_int_mapping(rules.get("ctype_daily_expected"))
+    ctype_defaults = _normalize_int_mapping(rules.get("ctype_defaults"))
 
     station_key = _clean_text(station_id)
     ctype_key = _clean_text(ctype)
 
+    if station_key in station_daily_expected:
+        return station_daily_expected[station_key]
     if station_key in station_overrides:
         return station_overrides[station_key]
+    if ctype_key in ctype_defaults:
+        return ctype_defaults[ctype_key]
+    if "*" in ctype_defaults:
+        return ctype_defaults["*"]
     if ctype_key in ctype_daily_expected:
         return ctype_daily_expected[ctype_key]
 
