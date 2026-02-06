@@ -1,11 +1,10 @@
 {
   "default_daily_expected": 24,
-  "ctype_daily_expected": {
-    "13": 48,
+  "ctype_defaults": {
     "01": 24,
-    "03": 48
+    "*": 48
   },
-  "station_overrides": {},
+  "station_daily_expected": {},
   "sourcetype_filter": "1",
   "day_start_hour": 9
 }

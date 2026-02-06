@@ -10,7 +10,7 @@
 - `实到报`：站点当月实际接收段次数（按时段去重）
 - `到报率(%)`：`实到报 / 应到报 * 100`
 
-当前实现按 `stationid` 聚合，支持配置化规则（站型默认 + 站点覆盖），并支持按“水文日时间窗”统计（默认 `09:00` 到次日 `08:59`）。
+当前实现按 `stationid` 聚合，支持“站点全量段次配置 + 站型默认值”规则，并支持按“水文日时间窗”统计（默认 `09:00` 到次日 `08:59`）。
 
 ---
 
@@ -19,7 +19,7 @@
 - 月报查询：按“年 + 月”查询每个站点的每日实到报段次（1~31 列）
 - 汇总统计：输出 `应到报`、`实到报`、`到报率(%)`
 - Excel 导出：一键导出当前月报
-- 统计规则配置：页面可读取/修改本地 JSON 规则
+- 统计规则配置：页面可读取/修改本地 JSON 规则（支持一键重新生成）
 - 数据过滤：仅统计 `Sourcetype=1`（可在配置中调整）
 
 ---
@@ -42,7 +42,7 @@
 ### 2) 请求处理流程
 
 1. 前端调用 `/api/report/monthly?year=YYYY&month=MM`
-2. 后端读取 `report_rules.json`，解析 `day_start_hour` 与过滤条件
+2. 后端读取 `report_rules.json`，解析 `day_start_hour` 与过滤条件（必要时自动生成配置）
 3. 后端按统计时间窗查询 `OneDayData`，并获取 `Stations`
 4. `report_logic` 按站点逐日聚合（同站点同“应报时段”去重）
 5. 返回 JSON 给前端渲染；或由 `/api/report/monthly/export` 生成 Excel
@@ -50,9 +50,9 @@
 ### 3) 关键统计口径
 
 - **应到报段次来源**：
-  - 先按 `ctype_daily_expected[Ctype]`
-  - 再用 `station_overrides[stationid]` 覆盖
-  - 无匹配时用 `default_daily_expected`
+  - 以 `station_daily_expected[stationid]` 为准（全量表）
+  - 若缺失，则按 `ctype_defaults[Ctype]` 或 `ctype_defaults["*"]` 兜底
+  - 再缺失时使用 `default_daily_expected`
 - **统计时间窗**：
   - `day_start_hour=9` 时，统计月范围为：
   - 当月 `1日09:00`（含）到次月 `1日09:00`（不含）
@@ -186,6 +186,7 @@ start_windows.bat
 2. 点击“查询”获取月报
 3. 点击“导出 Excel”下载同口径报表
 4. 点击“配置规则”可查看和修改本地配置
+5. 需要重新生成时点“重新生成配置”（会覆盖手动修改）
 
 ### 2) 配置文件说明
 
@@ -196,12 +197,13 @@ start_windows.bat
 ```json
 {
   "default_daily_expected": 24,
-  "ctype_daily_expected": {
-    "RR": 24,
-    "ZZ": 48
+  "ctype_defaults": {
+    "01": 24,
+    "*": 48
   },
-  "station_overrides": {
-    "A001": 48
+  "station_daily_expected": {
+    "A001": 24,
+    "B001": 48
   },
   "sourcetype_filter": "1",
   "day_start_hour": 9
@@ -211,8 +213,8 @@ start_windows.bat
 字段解释：
 
 - `default_daily_expected`: 默认每日应到报段次
-- `ctype_daily_expected`: 按站型设置每日应到报段次
-- `station_overrides`: 按站点覆盖每日应到报段次
+- `ctype_defaults`: 站型默认段次（用于“重新生成配置”）
+- `station_daily_expected`: 站点全量每日应到报段次（主要维护项）
 - `sourcetype_filter`: 数据来源过滤值
 - `day_start_hour`: 报表日开始小时（0~23）
 
@@ -226,6 +228,8 @@ start_windows.bat
   - 获取当前配置
 - `PUT /api/config`
   - 保存配置
+- `POST /api/config/regenerate`
+  - 重新生成配置（覆盖 `station_daily_expected`）
 
 配置更新示例：
 
@@ -234,8 +238,8 @@ curl -X PUT http://127.0.0.1:8000/api/config \
   -H 'Content-Type: application/json' \
   -d '{
     "default_daily_expected": 24,
-    "ctype_daily_expected": {"RR": 24, "ZZ": 48},
-    "station_overrides": {},
+    "ctype_defaults": {"01": 24, "*": 48},
+    "station_daily_expected": {},
     "sourcetype_filter": "1",
     "day_start_hour": 9
   }'
@@ -278,8 +282,13 @@ uv sync
 请检查：
 
 - `sourcetype_filter` 是否与库中实际值一致
-- `ctype_daily_expected` 的键是否与 `Stations.Ctype` 实际值一致
+- `station_daily_expected` 是否包含目标站点
+- `ctype_defaults` 的键是否与 `Stations.Ctype` 实际值一致
 - `day_start_hour` 是否符合你的报表口径
+
+### 4) 重新生成配置后手动修改丢失
+
+“重新生成配置”会覆盖 `station_daily_expected`，这是设计行为。若需保留修改，请导出或备份配置文件后再重新生成。
 
 ### 4) Windows 下双击 `start_windows.bat` 闪退
 
